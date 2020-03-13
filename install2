@@ -12,6 +12,6 @@ source ipfs/install
 source player/install
 
 # Reboot node
-echo -e "Congratulations! Your meshmedia node is ready at ${NODE_NAME}.local"
+echo -e "Congratulations! Your meshmedia node is ready at `cat /etc/hostname`.local"
 echo -e "Connect your computer to the access point with the same name and visit http://10.0.0.1"
 sudo reboot
