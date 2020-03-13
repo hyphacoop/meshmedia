@@ -1,0 +1,17 @@
+#!/usr/bin/env bash
+
+set -e
+
+# Configure access point
+source hostapd/install
+
+# Install ipfs
+source ipfs/install
+
+# Install player from tomeshnet/ipfs-live-streaming
+source player/install
+
+# Reboot node
+echo -e "Congratulations! Your meshmedia node is ready at ${NODE_NAME}.local"
+echo -e "Connect your computer to the access point with the same name and visit http://10.0.0.1"
+sudo reboot
