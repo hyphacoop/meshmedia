@@ -1,0 +1,22 @@
+#!/usr/bin/env bash
+
+set -e
+
+IPFS_ID=
+M3U8_HTTP_URLS=
+
+BASE_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+# Install web video player
+sudo rm -rf /var/www/html/* || true
+sudo mkdir -p /var/www/html/ || true
+sudo cp -r ${BASE_DIR}/video-player/* /var/www/html/
+
+# Configure video player
+sudo sed -i "s#__IPFS_GATEWAY__#http://10.0.0.1#g" /var/www/html/js/common.js
+sudo sed -i "s#__IPFS_ID_ORIGIN__#${IPFS_ID}#g" /var/www/html/js/common.js
+sudo sed -i "s#__M3U8_HTTP_URLS__#${M3U8_HTTP_URLS}#g" /var/www/html/js/common.js
+
+# Configure nginx
+sudo cp ${BASE_DIR}/nginx-default /etc/nginx/sites-available/default
+sudo systemctl restart nginx.service

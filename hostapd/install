@@ -1,0 +1,121 @@
+#!/usr/bin/env bash
+
+set -e
+
+BASE_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+# Internet DNS servers
+I_DNS_SERVER_0="1.1.1.1"
+I_DNS_SERVER_1="1.0.0.1"
+
+# Install packages to run IEEE 802.11 Access Point
+sudo apt-get install hostapd radvd dnsmasq iptables -y
+
+echo "allow-hotplug wlan-ap" | sudo tee --append /etc/network/interfaces.d/wlan-ap > /dev/null
+echo "iface wlan-ap inet static" | sudo tee --append /etc/network/interfaces.d/wlan-ap > /dev/null
+echo "    address 10.0.0.1" | sudo tee --append /etc/network/interfaces.d/wlan-ap > /dev/null
+echo "    netmask 255.255.255.0" | sudo tee --append /etc/network/interfaces.d/wlan-ap > /dev/null
+echo "    network 10.0.0.0" | sudo tee --append /etc/network/interfaces.d/wlan-ap > /dev/null
+echo "    broadcast 10.0.0.255" | sudo tee --append /etc/network/interfaces.d/wlan-ap > /dev/null
+echo "iface wlan-ap inet6 static" | sudo tee --append /etc/network/interfaces.d/wlan-ap > /dev/null
+echo "    address fdfc::2" | sudo tee --append /etc/network/interfaces.d/wlan-ap > /dev/null
+echo "    netmask 64" | sudo tee --append /etc/network/interfaces.d/wlan-ap > /dev/null
+echo "" | sudo tee --append /etc/network/interfaces.d/wlan-ap > /dev/null
+
+# Enable packet forwarding
+sudo cp /etc/sysctl.conf /etc/sysctl.conf.bak
+sudo sed -i 's/#net.ipv4.ip_forward=1/net.ipv4.ip_forward=1/' /etc/sysctl.conf
+sudo sed -i 's/#net.ipv6.conf.all.forwarding=1/net.ipv6.conf.all.forwarding=1/' /etc/sysctl.conf
+echo '1' | sudo tee --append /proc/sys/net/ipv4/ip_forward
+
+# Get network name and password
+APSSID="$(cat /etc/hostname)"
+
+# Select wpa-eap or wpa-psk
+read -p "Use WPA-EAP (Y) or WPA2-PSK (n) for WiFi Access Point $APSSID? " -n 1 -r
+echo ""
+if [[ $REPLY =~ ^[Nn]$ ]]; then
+    USE_EAP=false
+    while [ "${#APPASS}" -lt 8 ] || [ "${#APPASS}" -gt 63 ]; do
+        read -r -p "Set WPA2-PSK password (8-63 characters): " APPASS;
+    done
+else
+    USE_EAP=true
+    while [ "${#APPASS}" -lt 8 ] || [ "${#APPASS}" -gt 63 ]; do
+        read -r -p "Set WPA-EAP password (8-63 characters) for user \"guest\": " APPASS;
+    done
+fi
+
+# Configure network with hostapd
+sudo cp "$BASE_DIR/nat.sh" /etc/hostapd/nat.sh
+if [ "$USE_EAP" = true ]; then
+    # Configure hostapd for wpa-eap
+    sudo cp "$BASE_DIR/wpa-eap/hostapd.conf" /etc/hostapd/hostapd.conf
+    sudo echo "ssid=$APSSID" | sudo tee --append /etc/hostapd/hostapd.conf > /dev/null
+    sudo cp "$BASE_DIR/wpa-eap/hostapd.eap_user" /etc/hostapd/hostapd.eap_user
+    sudo echo "\"guest\" MSCHAPV2 \"$APPASS\" [2]" | sudo tee --append /etc/hostapd/hostapd.eap_user > /dev/null
+
+    # Generate wpa-eap certificates
+    cp -r "$BASE_DIR/wpa-eap/certs" "$BASE_DIR/tmp"
+    /bin/bash "$BASE_DIR/tmp/bootstrap"
+    sudo cp "$BASE_DIR/tmp/ca.pem" /etc/hostapd/ca.pem
+    sudo cp "$BASE_DIR/tmp/server.pem" /etc/hostapd/server.pem
+    rm -rf "$BASE_DIR/tmp"
+else
+    # Configure hostapd for wpa-psk
+    sudo cp "$BASE_DIR/wpa-psk/hostapd.conf" /etc/hostapd/hostapd.conf
+    sudo echo "ssid=$APSSID" | sudo tee --append /etc/hostapd/hostapd.conf > /dev/null
+    sudo echo "wpa_passphrase=$APPASS" | sudo tee --append /etc/hostapd/hostapd.conf > /dev/null
+fi
+
+# Configure DHCP with dnsmasq
+if [ -f /etc/dnsmasq.conf ]; then
+    sudo cp /etc/dnsmasq.conf /etc/dnsmasq.conf.bak
+fi
+
+# Configure DNS servers
+echo "server=$I_DNS_SERVER_0" | sudo tee --append /etc/dnsmasq.conf
+echo "server=$I_DNS_SERVER_1" | sudo tee --append /etc/dnsmasq.conf
+
+if [ -f /etc/dhcpcd.conf ]; then
+    sudo cp /etc/dhcpcd.conf /etc/dhcpcd.conf.bak
+    sudo echo "" | sudo tee --append /etc/dhcpcd.conf > /dev/null
+    sudo echo "denyinterfaces wlan-ap" | sudo tee --append /etc/dhcpcd.conf > /dev/null
+fi
+
+# Setup radvd
+cp "$BASE_DIR/radvd.conf" /tmp
+sudo mv /tmp/radvd.conf /etc
+sudo systemctl daemon-reload
+sudo systemctl enable radvd.service
+sudo systemctl start radvd.service
+
+# Enable hostapd service
+if [ -f /etc/default/hostapd ]; then
+    sed '\?^DAEMON_CONF?d' /etc/default/hostapd | sudo tee /etc/default/hostapd > /dev/null
+    sudo echo DAEMON_CONF="/etc/hostapd.conf" | sudo tee --append /etc/default/hostapd > /dev/null
+fi
+
+# Remove existing file that may be masking the service
+sudo rm -rf /etc/systemd/system/hostapd.service
+
+sudo cp "$BASE_DIR/hostapd.service" /etc/systemd/system/hostapd.service
+sudo systemctl daemon-reload
+sudo systemctl enable hostapd.service
+
+# Find onboard adapter by driver and lock to wlan-ap
+for wlanfile in /sys/class/net/wlan*; do
+    wlan="$(basename "$wlanfile")"
+    driverPath=$(readlink "/sys/class/net/$wlan/device/driver")
+    driver=$(basename "$driverPath")
+    if [[ "$driver" == "xradio_wlan" || "$driver" == "brcm80211" || "$driver" == "brcmfmac" || "$driver" == "rtl8189fs" ]]; then
+        echo "SUBSYSTEM==\"net\", ACTION==\"add\", DRIVERS==\"$driver\", ATTR{dev_id}==\"0x0\", ATTR{type}==\"1\", KERNEL==\"wlan*\", NAME=\"wlan-ap\"" | sudo tee /etc/udev/rules.d/70-persistent-net.rules
+    fi
+done
+
+# Apply wpa_supplicant patch 
+# shellcheck disable=SC2024
+if [ -f /lib/dhcpcd/dhcpcd-hooks/10-wpa_supplicant ]; then
+    sudo patch -F99 -p2 -N  -d / < "$BASE_DIR/wpa-patch.diff"
+    echo "wlan-ap" | sudo tee /etc/wpa_devices
+fi
