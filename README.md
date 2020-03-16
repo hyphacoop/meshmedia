@@ -1,7 +1,16 @@
-meshmedia
-=========
+Mesh Media
+==========
 
-TODO description
+_Mesh Media_ is a project by the [Hypha Worker Co-operative](https://hypha.coop).
+
+The software and guides make it easy to host community nodes using available hardware for disseminating multimedia content across our decentralized web ecosystems.
+This work draws heavily from ongoing work by [Toronto Mesh](https://tomesh.net) and is tailored toward specific use-cases.
+
+A _Mesh Media_ node currently configures a Raspberry Pi to start up an Access Point, where other devices can connect to watch video content available on the [IPFS](https://ipfs.io) network through their web browser by simply providing a [Content Identifier (CID)](https://docs.ipfs.io/guides/concepts/cid/).
+While connected to the Internet, the node can seed content to the IPFS network, but while offline a connected device can play content that is already stored on the Raspberry Pi.
+The player has been tested on desktop and mobile devices and currently supports playback of MPEG-4 and HTTP Live Streaming (HLS) content, with timecode and CID-based bookmark features.
+
+Future steps may include off-Internet distribution via local mesh networks and using other distributed content networks such as [Dat](https://dat.foundation).
 
 ## Set Up
 
@@ -21,7 +30,7 @@ TODO description
 
 1. In your SSH session, run `passwd` and change your login password. It is very important to choose a strong password so others cannot access the Pi.
 
-1. Run the following to install _meshmedia_:
+1. Run the following to install _Mesh Media_:
 
     ```
     $ wget https://raw.githubusercontent.com/hyphacoop/meshmedia/master/install && chmod +x install && ./install
@@ -31,9 +40,9 @@ TODO description
 
 1. Nearby devices can now connect to the new Access Point named `meshmedia` and watch videos on the IPFS network using its CID. For example, you can watch _A technical introduction to IPFS_ by _Hector Sanjuan_ with the URL `http://10.0.0.1/?vod=QmNtQiSK7dZbMCH89kgBLzgfMQP3UoWqT2QKWvjtVt2jTx`. You can try this with any video from the [Our Networks archive](https://2019.ournetworks.ca/recorded-talks/), and many others on the Internet, by replacing the CID in the URL.
 
-## HLS Content
+### HLS Content
 
-In addition to `mp4` files, _meshmedia_ can also play HLS playlists commonly used for live streamed content. For example, SSH into the Pi at `ssh pi@meshmedia.local` and download the Our Networks 2019 [live stream archive of September 22](https://github.com/ournetworks/ournetworks.ca/blob/master/livestream/live-2019-09-22.m3u8):
+In addition to `mp4` files, _Mesh Media_ can also play HLS playlists commonly used for live streamed content. For example, SSH into the Pi at `ssh pi@meshmedia.local` and download the Our Networks 2019 [live stream archive of September 22](https://github.com/ournetworks/ournetworks.ca/blob/master/livestream/live-2019-09-22.m3u8):
 
 ```
 cd /var/www/html/
@@ -42,15 +51,21 @@ sudo wget https://2019.ournetworks.ca/livestream/live-2019-09-22.m3u8
 
 Now you can watch the HLS content at `http://10.0.0.1/?m3u8=live-2019-09-22.m3u8`.
 
-## Offline Content
+### Storing Content
 
-You can easily store content for offline playback. SSH into the Pi at `ssh pi@meshmedia.local` and `ipfs pin add` the CID. For example,
+You can easily store content for offline playback. SSH into the Pi at `ssh pi@meshmedia.local` and `ipfs pin add` the CID. For example:
 
 ```
 ipfs pin add QmNtQiSK7dZbMCH89kgBLzgfMQP3UoWqT2QKWvjtVt2jTx
 ```
 
 Now you can disconnect the Pi from the Internet and still be able to watch the content with the URL from before. You will also help to host and seed this content for others once your Pi is connected to the Internet.
+
+You can also share content on your Pi to the IPFS network by using `ipfs add` and distribute its CID for others to watch:
+
+```
+ipfs add --nocopy --pin=true my_content.mp4
+```
 
 ## Attribution
 
