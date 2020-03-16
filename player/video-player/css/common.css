@@ -27,7 +27,7 @@ p {
 /* Variables */
 
 .color-accent {
-  color: #ff3f00;
+  color: #9900fc;
 }
 
 .bg-white {
@@ -118,7 +118,7 @@ button {
   font-weight: bold;
   text-decoration: none;
   white-space: nowrap;
-  background-color: #ffe100;
+  background-color: #f30cfb;
   border: 0;
   cursor: pointer;
   line-height: 1em;
@@ -132,14 +132,14 @@ button:hover,
 .button:focus,
 button:focus {
   color: #ffffff;
-  background-color: #ff3f00;
-  border-color: #ff3f00;
+  background-color: #9900fc;
+  border-color: #9900fc;
   text-decoration: none;
 }
 
 .button.button-primary,
 button.button-primary {
-  border: 7px solid #ff3f00;
+  border: 7px solid #9900fc;
   background-color: $yellow;
 }
 
@@ -148,8 +148,8 @@ button.button-primary:hover,
 .button.button-primary:focus,
 button.button-primary:focus {
   color: #ffffff;
-  background-color: #ff3f00;
-  border-color: #ff3f00;
+  background-color: #9900fc;
+  border-color: #9900fc;
 }
 
 .compact {
