@@ -9,7 +9,7 @@ I_DNS_SERVER_0="1.1.1.1"
 I_DNS_SERVER_1="1.0.0.1"
 
 # Install packages to run IEEE 802.11 Access Point
-sudo apt-get install hostapd radvd dnsmasq iptables -y
+sudo apt-get install hostapd dnsmasq iptables -y
 
 echo "allow-hotplug wlan-ap" | sudo tee --append /etc/network/interfaces.d/wlan-ap > /dev/null
 echo "iface wlan-ap inet static" | sudo tee --append /etc/network/interfaces.d/wlan-ap > /dev/null
@@ -72,6 +72,7 @@ fi
 if [ -f /etc/dnsmasq.conf ]; then
     sudo cp /etc/dnsmasq.conf /etc/dnsmasq.conf.bak
 fi
+sudo cp "$BASE_DIR/dnsmasq.conf" /etc/dnsmasq.conf
 
 # Configure DNS servers
 echo "server=$I_DNS_SERVER_0" | sudo tee --append /etc/dnsmasq.conf
@@ -82,13 +83,6 @@ if [ -f /etc/dhcpcd.conf ]; then
     sudo echo "" | sudo tee --append /etc/dhcpcd.conf > /dev/null
     sudo echo "denyinterfaces wlan-ap" | sudo tee --append /etc/dhcpcd.conf > /dev/null
 fi
-
-# Setup radvd
-cp "$BASE_DIR/radvd.conf" /tmp
-sudo mv /tmp/radvd.conf /etc
-sudo systemctl daemon-reload
-sudo systemctl enable radvd.service
-sudo systemctl start radvd.service
 
 # Enable hostapd service
 if [ -f /etc/default/hostapd ]; then
