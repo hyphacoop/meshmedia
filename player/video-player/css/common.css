@@ -118,7 +118,7 @@ button {
   font-weight: bold;
   text-decoration: none;
   white-space: nowrap;
-  background-color: #f30cfb;
+  background-color: #ffffff;
   border: 0;
   cursor: pointer;
   line-height: 1em;
@@ -140,7 +140,7 @@ button:focus {
 .button.button-primary,
 button.button-primary {
   border: 7px solid #9900fc;
-  background-color: $yellow;
+  background-color: $000000;
 }
 
 .button.button-primary:hover,
