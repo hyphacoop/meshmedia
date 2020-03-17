@@ -45,8 +45,8 @@ Future steps may include off-Internet distribution via local mesh networks and u
 In addition to `mp4` files, _Mesh Media_ can also play HLS playlists commonly used for live streamed content. For example, SSH into the Pi at `ssh pi@meshmedia.local` and download the Our Networks 2019 [live stream archive of September 22](https://github.com/ournetworks/ournetworks.ca/blob/master/livestream/live-2019-09-22.m3u8):
 
 ```
-cd /var/www/html/
-sudo wget https://2019.ournetworks.ca/livestream/live-2019-09-22.m3u8
+$ cd /var/www/html/
+$ sudo wget https://2019.ournetworks.ca/livestream/live-2019-09-22.m3u8
 ```
 
 Now you can watch the HLS content at `http://10.0.0.1/?m3u8=live-2019-09-22.m3u8`.
@@ -56,7 +56,7 @@ Now you can watch the HLS content at `http://10.0.0.1/?m3u8=live-2019-09-22.m3u8
 You can easily store content for offline playback. SSH into the Pi at `ssh pi@meshmedia.local` and `ipfs pin add` the CID. For example:
 
 ```
-ipfs pin add QmNtQiSK7dZbMCH89kgBLzgfMQP3UoWqT2QKWvjtVt2jTx
+$ ipfs pin add QmNtQiSK7dZbMCH89kgBLzgfMQP3UoWqT2QKWvjtVt2jTx
 ```
 
 Now you can disconnect the Pi from the Internet and still be able to watch the content with the URL from before. You will also help to host and seed this content for others once your Pi is connected to the Internet.
@@ -64,7 +64,7 @@ Now you can disconnect the Pi from the Internet and still be able to watch the c
 You can also share content on your Pi to the IPFS network by using `ipfs add` and distribute its CID for others to watch:
 
 ```
-ipfs add --nocopy --pin=true my_content.mp4
+$ ipfs add --nocopy --pin=true my_content.mp4
 ```
 
 ## Attribution
